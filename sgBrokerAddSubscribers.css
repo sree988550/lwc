@@ -1,0 +1,214 @@
+.vloc-ins-census-info-title-container {
+    border-radius: 4px;
+    border-color: #d3d6dc;
+    border-width: 2px;
+    color: #677083;
+    margin-bottom: 1.5rem;
+}
+
+.vloc-ins-family-tiers-container {
+    justify-content: space-between;
+}
+.vloc-ins-census-count {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0d1c3d;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.employee-actions {
+    display: flex;
+    justify-content: space-between;
+}
+
+.group-left > span,
+.group-right > span {
+    color: #006Ba6;
+}
+
+.upload-census-btn,
+.upload-census-btn input[type="file"],
+.upload-census-btn input[type="file" i],
+.upload-census-btn label,
+.upload-census-btn *,
+span[c-sgbrokerinsfileupload_sgbrokerinsfileupload],
+[vlocity_ins-insfileupload_insfileupload] {
+    cursor: pointer !important;
+}
+
+.upload-census-btn {
+    font-family: 'Gotham-Medium', sans-serif !important;
+}
+
+.margin-right-sf {
+    margin-right: 0.75rem;
+}
+
+.margin-left-sf {
+    margin-left: 0.75rem;
+}
+
+.instructional-text {
+    color: #0D1C3D;
+    font-size: 1rem;
+    margin: 0 auto 1.5rem;
+    max-width: 797px;
+    text-align: center;
+}
+
+.instructional-text-qq {
+    color: #0D1C3D;
+    font-size: 1rem;
+    margin: 0 auto 1.5rem;
+    max-width: 797px;
+}
+
+.employee-count-container {
+    margin: 0 auto 4.5rem;
+    max-width: 798px;
+}
+
+.employee-count-container.ncs-flow {
+    margin: 0 auto;
+}
+
+.effective-date-in-past {
+    color: #FE0404;
+    font-size: 1rem;
+    text-align: center;
+    max-width: 638px;
+    margin: 0 auto;
+}
+
+.action-link {
+    color: #006BA6;
+    cursor: pointer;
+} button.action-link:hover {
+    color: #005584;
+}
+
+.m-t-1 {
+    margin-top: 1rem;
+}
+
+.ncs-init-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4rem;
+    margin-bottom: 2rem;
+}
+
+.ncs-init-actions > div {
+    max-width: 370px;
+    min-height: 389px;
+    box-shadow: 1.39885px 1.39885px 2.79769px 1.39885px rgba(0, 0, 0, 0.25);
+    position: relative;
+    box-sizing: border-box;
+    padding: 1rem;
+}
+
+.ncs-init-actions > div > * {
+    position: relative;
+}
+
+.ncs-init-actions > div > header {
+    height: 48px;
+}
+
+.ncs-init-actions > div > svg {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ncs-init-actions > div > header,
+.ncs-init-actions > div > svg {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 18px;
+    font-family: "Gotham-Medium", sans-serif !important;
+}
+
+
+.actions-instructions {
+    margin-bottom: 1rem;
+}
+
+div.actions-bottom {
+    position: absolute !important;
+    left: 0;
+    bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 90px;
+}
+
+.manually-add-btn .btn {
+    display: block;
+    text-align: center;
+}
+
+.m-r-svg {
+    margin-right: 0.5rem;
+}
+
+.upload-census-modal-buttons {
+    display: inline-flex;
+    justify-self: right;
+}
+
+.save-btn {
+    margin: 0;
+    display: block;
+    display: inline-block;
+    text-align: right;
+    margin-right: 1rem;
+}
+
+.ooa-error-message {
+    color: #FE0404;
+    margin: 1rem 0;
+    font-size: 0.8125rem;
+}
+
+/* Effectively set in the KpCustomFontStylesheet */
+.error-module-bg {
+    background: #C23934 !important;
+    color: #fff !important;
+}
+
+footer {
+    width: 100%;
+    display: inline-flex;
+    justify-content: right;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+:host {
+    --slds-c-button-text-color: #006Ba6;
+    --sds-c-button-text-color: #006Ba6;
+    --slds-c-button-neutral-color-border: #006Ba6;
+    --sds-c-button-neutral-color-border: #006Ba6;
+    --lwc-buttonColorBorderPrimary: #006Ba6;
+    --slds-c-button-sizing-border: 2px;
+    --sds-c-button-sizing-border: 2px;
+    --lwc-borderWidthThin: 2px;
+    --slds-c-button-brand-color-background: #006Ba6;
+    --sds-c-button-brand-color-background: #006Ba6;
+    --lwc-brandAccessible: #006Ba6;
+    --lwc-colorBackgroundToastError: #706E6B;
+}
+
+@media only screen and (max-width: 1080px) {
+    .ncs-init-actions {
+        flex-direction: column;
+    }
+}

@@ -1,0 +1,546 @@
+<template>
+    <!-- Quick Quote -->
+    <template if:false={isFromNewCustomerSetup}>
+        <!-- Effective Date - False -->
+        <template if:true={effectiveDateInPast}>
+            <div class="effective-date-in-past">
+                The effective date of your quote has expired. Please return to the <span class="action-link" onclick={navigateToGroupDetails}>Group Details page</span> and enter a new effective date.
+            </div>
+        </template>
+        <!-- Effective Date - True -->
+        <template if:false={effectiveDateInPast}>
+            <template if:false={isLoaded}>
+                <lightning-spinner alternative-text={LoadingUC} size="medium"></lightning-spinner>
+            </template>
+            <!-- Census Id Exists -->
+            <template if:true={isValidCensus}>
+                <!-- Help Text -->
+                <div role="main" class="instructional-text-qq">
+                    <p class="slds-m-bottom_small">There are two ways to add Employees. You can add them manually by clicking "Manually Add Employees", or import a census by clicking "Upload Census". If you need a census template, download one from this page.</p>
+                    <p class="slds-m-bottom_small">Note: If you use your own template please ensure the census is on the first tab of your spreadsheet and that the language in the header row matches the following labels exactly:</p>
+                    <p>First Name, Last Name, Date of Birth or Age (as of Effective Date), Zip Code, Relationship Type</p>
+                </div>
+                <div class="employee-count-container">
+                    <!-- Employee Count -->
+                    <ul class="vloc-ins-census-info-title-container nds-grid nds-p-horizontal_large nds-p-bottom_small nds-p-top_large nds-border_bottom nds-border_top nds-border_left nds-border_right slds-grid slds-p-horizontal_large slds-p-bottom_small slds-p-top_large slds-border_bottom slds-border_top slds-border_left slds-border_right">
+                        <li class="nds-1-of-3 slds-size_1-of-3 text-center">
+                            <p class="nds-text-body_small slds-text-body_small"> {labels.InsOSCensusEmployeeSubscribers}</p>
+                            <p class="nds-m-top_xx-small slds-m-top_xx-small vloc-ins-census-count">{censusInfo.empCount}
+                            </p>
+                        </li>
+                        <li class="nds-size_1-of-3 slds-size_1-of-3 text-center">
+                            <p class="nds-text-body_small slds-text-body_small"> {labels.InsOSCensusEmployeeDependents}</p>
+                            <p class="nds-m-top_xx-small slds-m-top_xx-small vloc-ins-census-count">{censusInfo.depCount}
+                            </p>
+                        </li>
+                        <li class="nds-size_1-of-3 slds-size_1-of-3 text-center">
+                            <p class="nds-text-body_small slds-text-body_small">{labels.InsOSCensusEmployeeTotalCount}</p>
+                            <p class="nds-m-top_xx-small slds-m-top_xx-small vloc-ins-census-count">{censusInfo.total}</p>
+                        </li>
+                    </ul>
+                    <!-- Upload and Add Employee Actions -->
+                    <div class="nds-grid nds-grid_align-end nds-grid_vertical-align-center slds-grid slds-grid_align-end slds-grid_vertical-align-center">
+                        <div class="nds-grid nds-grid_align-center nds-m-vertical_xx-small slds-grid slds-grid_align-center slds-m-vertical_xx-small">
+                            <vlocity_ins-button label={labels.InsOSCensusDownloadTemplate} style="font-size: 1rem; margin-right: 1.5rem;" onclick={downloadFile} theme={theme}></vlocity_ins-button>
+                            <template if:false={showCensus}>
+                                <c-sg-broker-ins-file-upload 
+                                    enrollment-spreadsheet={isEnrollmentSpreadsheet} 
+                                    is-from-new-customer-setup={isFromNewCustomerSetup} 
+                                    onuploaderror={handleUploadError} 
+                                    onfilemapcreated={filemapCreated} 
+                                    label={uploadCensusBtnLabel}
+                                    available-fields={filemapHeaders} 
+                                    theme={theme} title={labels.InsOSCensusDetails}
+                                    class="nds-m-horizontal_small slds-m-horizontal_small upload-census-btn" 
+                                    save-label={labels.Save}
+                                    button-variant="neutral" 
+                                    style="margin-left: 0;" 
+                                    modal-button={isNotModalButton}>
+                                </c-sg-broker-ins-file-upload>
+                            </template>
+                            <template if:true={showCensus}>
+                                <vlocity_ins-button theme={theme} label={uploadCensusBtnLabel} variant="neutral" aria-live="polite" aria-label="Click to upload new census" 
+                                    onclick={showUploadCensusModal} class="nds-m-horizontal_small slds-m-horizontal_small upload-census-modal-btn" style="margin-left: 0;" icon-name="utility:upload">
+                                </vlocity_ins-button>
+                            </template>
+                            <vlocity_ins-button theme={theme} label={labels.InsOSCensusAddEmployee} variant="neutral" aria-live="polite" aria-label="Click to add employee" 
+                                onclick={addEmployee} style="margin-right: 0; margin-left: 0;" class="nds-m-horizontal_small slds-m-horizontal_small add-employees">
+                            </vlocity_ins-button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Census Display -->
+                <div class="nds-grid nds-wrap slds-grid slds-wrap">
+                    <template if:true={showCensus}>
+                        <div class="nds-size_12-of-12 slds-size_12-of-12">
+                            <div class="employee-actions">
+                                <div class="group-left">
+                                    <vlocity_ins-button if:true={showSave} label={labels.ExpandAll} aria-label="Click to expand all employee sections" aria-live="polite" onclick={employeeAccordianHandler} data-accordian="expand"></vlocity_ins-button>
+                                    <span if:true={showSave} class="nds-m-horizontal_small slds-m-horizontal_small">|</span>
+                                    <vlocity_ins-button if:true={showSave} label={labels.CollapseAll} aria-label="Click to collapse all employee sections" aria-live="polite" onclick={employeeAccordianHandler} style="margin-left: 0;" class="nds-m-horizontal_small slds-m-horizontal_small" data-accordian="collapse"></vlocity_ins-button>
+                                </div>
+                                <div class="group-right">
+                                    <vlocity_ins-button if:true={showSave} label={labels.DownloadCensusDetails} onclick={handleDocumentDownload}></vlocity_ins-button>
+                                    <span if:true={showSave} class="nds-m-horizontal_small slds-m-horizontal_small">|</span>
+                                    <vlocity_ins-button if:true={showSave} label={labels.InsOSCensusDeleteAllData} onclick={showDeleteAllModal} aria-label="Click to delete all employees" aria-live="polite"></vlocity_ins-button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="nds-size_1-of-1 slds-size_1-of-1" aria-live="polite">
+                            <template for:each={pageData} for:item="employee">
+                                <c-sg-broker-add-subscribers-row if:true={employee.showMember} onupdate={handleUpdate} onnew={handleNewDependent}
+                                    key={employee.uuid} ondelete={handleDelete} theme={theme} onselected={handleEmployeeSelect}
+                                    display-settings={displaySettings} member={employee} headers={headers} islast={employee.isLast} effective-date={effectiveDate} err-msg-dep={globalDepError}>
+                                </c-sg-broker-add-subscribers-row>
+                            </template>
+                        </div>
+                    </template>
+                    <template if:false={showCensus}>
+                        <div class="nds-size_1-of-1 slds-size_1-of-1">
+                            <p style="text-align: center"><b>There are currently no members in your census.</b></p>
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <!-- Pagination -->
+            <template if:true={showPagination}>
+                <ul class="nds-button-group-list nds-text-heading_small nds-m-top_small nds-align_absolute-center 
+                    slds-button-group-list slds-text-heading_small slds-m-top_small slds-align_absolute-center">
+                    <template if:true={showPrevPageControl}>
+                        <li>
+                            <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToFirstPage} label="&laquo;">
+                            </vlocity_ins-button>
+                        </li>
+                        <li>
+                            <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToPrevPage} label="&lsaquo;">
+                            </vlocity_ins-button>
+                        </li>
+                    </template>
+                    <template for:each={pageNumbers} for:item="page">
+                        <li key={page.index}>
+                            <button class={page.className} data-index={page.index} onclick={navigateToPage}>
+                                <span>{ page.index }</span>
+                            </button>
+                        </li>
+                    </template>
+                    <template if:true={showNextPageControl}>
+                        <li>
+                            <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToNextPage} label="&rsaquo;">
+                            </vlocity_ins-button>
+                        </li>
+                        <li>
+                            <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToLastPage} label="&raquo;">
+                            </vlocity_ins-button>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+            <!-- Delete All Confirmation Modal -->
+            <vlocity_ins-modal class="vloc-ins-delete-all-modal" title={labels.InsOSCensusDeleteAllData} size="small"
+                extra-header-class="nds-theme_error nds-theme_alert-texture slds-theme_error slds-theme_alert-texture">
+                <div slot="content">
+                    <div class="nds-text-heading_small slds-text-heading_small nds-p-around_large slds-p-around_large">
+                        <p style="font-size: 1rem;">{labels.InsCensusConfirmDeleteAll}</p>
+                    </div>
+                </div>
+                <div slot="footer">
+                    <vlocity_ins-button variant="neutral" class="nds-p-right_medium slds-p-right_medium"
+                        onclick={closeDeleteAllModal} label={labels.InsButtonCancel}></vlocity_ins-button>
+                    <vlocity_ins-button variant="neutral" label="Yes" onclick={clearAll} aria-label="Click to confirm delete all employees" aria-live="polite"></vlocity_ins-button>
+                </div>
+            </vlocity_ins-modal>
+            <!-- Upload New Census Modal - QQ and NCS -->
+            <vlocity_ins-modal class="upload-census-modal" title="Upload new census?" size="small"
+                extra-header-class="nds-theme_error nds-theme_alert-texture slds-theme_error slds-theme_alert-texture">
+                <div slot="content">
+                    <div class="nds-text-heading_small slds-text-heading_small nds-p-around_large slds-p-around_large">
+                        <p style="font-size: 1rem;">Uploading a new census will remove and replace the current census details on this page. Are you sure you want to upload a new census?</p>
+                    </div>
+                </div>
+                <div slot="footer">
+                    <div class="upload-census-modal-buttons">
+                        <vlocity_ins-button variant="neutral" class="nds-p-right_medium slds-p-right_medium"
+                            onclick={closeUploadCensusModal} label="Cancel"></vlocity_ins-button>
+                        <c-sg-broker-ins-file-upload 
+                            enrollment-spreadsheet={isEnrollmentSpreadsheet} 
+                            is-from-new-customer-setup={isFromNewCustomerSetup} 
+                            onuploaderror={handleUploadError}
+                            onfilemapcreated={filemapCreated} 
+                            onclick={closeUploadCensusModal}
+                            label="Yes" 
+                            available-fields={filemapHeaders} 
+                            theme={theme} 
+                            title={labels.InsOSNcsUploadCensus} 
+                            save-label={labels.Save} 
+                            button-variant="neutral" 
+                            modal-button={isModalButton}>
+                        </c-sg-broker-ins-file-upload>
+                    </div>
+                </div>
+            </vlocity_ins-modal>
+            <!-- Upload Census - Error Module -->
+            <vlocity_ins-modal class="upload-census-error-modal" title="Error" size="small" extra-header-class="error-module-bg nds-theme_alert-texture slds-theme_alert-texture">
+                <div slot="content">
+                    <p style="font-size: 1rem; padding: 1rem 1rem 0;">File import has failed. The following error should be corrected in order to proceed:</p>
+                    <p style="font-size: 1rem; padding: 1rem;">{uploadErrorMessage}</p>
+                </div>
+                <div slot="footer">
+                    <vlocity_ins-button variant="neutral" class="nds-p-right_medium slds-p-right_medium" onclick={closeUploadCensusErrorModal} label="Close"></vlocity_ins-button>
+                </div>
+            </vlocity_ins-modal>
+            <!-- Add and Save Employee, bottom -->
+            <footer if:true={showSave}>
+                <vlocity_ins-button label={labels.InsValidateCensus} onclick={saveMembers} class="save-btn" aria-label="Click to Save Subscribers" aria-live="polite"></vlocity_ins-button>
+                <vlocity_ins-button theme={theme} label={labels.InsOSCensusAddEmployee} variant="neutral"
+                    onclick={addEmployee} style="margin-right: 0; margin-left: 0;" class="nds-m-horizontal_small slds-m-horizontal_small add-employees" aria-live="polite" aria-label="Click to add employee">
+                </vlocity_ins-button>
+            </footer>
+        </template>
+    </template>
+    <!-- New Customer Setup -->
+    <template if:true={isFromNewCustomerSetup}>
+        <!-- Effective Date - False -->
+        <template if:true={effectiveDateInPast}>
+            <div class="effective-date-in-past">
+                The effective date of your quote has expired. Please return to the <span class="action-link" onclick={navigateToGroupDetails}>Group Details page</span> and enter a new effective date.
+            </div>
+        </template>
+        <!-- Effective Date - True -->
+        <template if:false={effectiveDateInPast}>
+            <template if:false={isLoaded}>
+                <lightning-spinner alternative-text={LoadingUC} size="medium"></lightning-spinner>
+            </template>
+            <!-- Census Id Exists -->
+            <template if:true={isValidCensus}>
+                <div class="employee-count-container ncs-flow">
+                    <!-- Employee Count -->
+                    <ul class="vloc-ins-census-info-title-container nds-grid nds-p-horizontal_large nds-p-bottom_small nds-p-top_large nds-border_bottom nds-border_top nds-border_left nds-border_right slds-grid slds-p-horizontal_large slds-p-bottom_small slds-p-top_large slds-border_bottom slds-border_top slds-border_left slds-border_right">
+                        <li class="nds-1-of-3 slds-size_1-of-3 text-center">
+                            <p class="nds-text-body_small slds-text-body_small"> {labels.InsOSCensusEmployeeSubscribers}</p>
+                            <p class="nds-m-top_xx-small slds-m-top_xx-small vloc-ins-census-count">{censusInfo.empCount}
+                            </p>
+                        </li>
+                        <li class="nds-size_1-of-3 slds-size_1-of-3 text-center">
+                            <p class="nds-text-body_small slds-text-body_small"> {labels.InsOSCensusEmployeeDependents}</p>
+                            <p class="nds-m-top_xx-small slds-m-top_xx-small vloc-ins-census-count">{censusInfo.depCount}
+                            </p>
+                        </li>
+                        <li class="nds-size_1-of-3 slds-size_1-of-3 text-center">
+                            <p class="nds-text-body_small slds-text-body_small">{labels.InsOSCensusEmployeeTotalCount}</p>
+                            <p class="nds-m-top_xx-small slds-m-top_xx-small vloc-ins-census-count">{censusInfo.total}</p>
+                        </li>
+                    </ul>
+                </div>
+                <template if:false={ncsCensusStarted}>
+                    <!-- Help Text -->
+                    <section class="instructional-text m-t-1">
+                        To begin adding employees, select one of the buttons below.
+                    </section>
+                    <!-- Actions -->
+                    <section class="ncs-init-actions" style= "gap:40px;">
+                        <div class="enrollment-spreadsheet-btn" style="flex: 1 1 0px; min-height: 425px">
+                            <header if:true={isMasRegion}>Upload Kaiser Employee Enrollment Ledger (Keel Spreadsheet)</header>
+                            <header if:false={isMasRegion}>Upload Membership Enrollment Spreadsheet</header>
+                            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M9.05407 30.5462V9.56161C6.85407 9.56161 5.07715 11.3385 5.07715 13.4539V38.3308C5.07715 40.5308 6.85407 42.3078 9.05407 42.3078H28.7695C30.9695 42.3078 32.7464 40.5308 32.7464 38.4155H16.9233C12.6079 38.4155 9.05407 38.4155 9.05407 30.5462ZM39.2618 13.4539H32.6618C30.4618 13.4539 28.6848 11.677 28.6848 9.56161V2.96161C28.7695 2.28469 28.1772 1.69238 27.4156 1.69238H16.9233C14.7233 1.69238 12.9464 3.46931 12.9464 5.58469V30.4616C12.9464 32.6616 14.7233 34.3539 16.9233 34.3539H36.6387C38.8387 34.3539 40.6156 32.577 40.6156 30.4616V14.8078C40.6156 14.0462 40.0233 13.4539 39.2618 13.4539ZM40.3618 7.95392L34.2695 1.94623C34.1002 1.777 33.931 1.69238 33.6771 1.69238C33.1695 1.69238 32.7464 2.11546 32.7464 2.62315V6.93854C32.7464 8.377 33.931 9.56161 35.3695 9.56161H39.6848C40.1925 9.56161 40.6156 9.13854 40.6156 8.63084C40.6156 8.377 40.531 8.20777 40.3618 7.95392Z" fill="#0078B3"></path>
+                                <mask id="mask0_2442_76863" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="5" y="1" width="36" height="42">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M9.05407 30.5462V9.56161C6.85407 9.56161 5.07715 11.3385 5.07715 13.4539V38.3308C5.07715 40.5308 6.85407 42.3078 9.05407 42.3078H28.7695C30.9695 42.3078 32.7464 40.5308 32.7464 38.4155H16.9233C12.6079 38.4155 9.05407 38.4155 9.05407 30.5462ZM39.2618 13.4539H32.6618C30.4618 13.4539 28.6848 11.677 28.6848 9.56161V2.96161C28.7695 2.28469 28.1772 1.69238 27.4156 1.69238H16.9233C14.7233 1.69238 12.9464 3.46931 12.9464 5.58469V30.4616C12.9464 32.6616 14.7233 34.3539 16.9233 34.3539H36.6387C38.8387 34.3539 40.6156 32.577 40.6156 30.4616V14.8078C40.6156 14.0462 40.0233 13.4539 39.2618 13.4539ZM40.3618 7.95392L34.2695 1.94623C34.1002 1.777 33.931 1.69238 33.6771 1.69238C33.1695 1.69238 32.7464 2.11546 32.7464 2.62315V6.93854C32.7464 8.377 33.931 9.56161 35.3695 9.56161H39.6848C40.1925 9.56161 40.6156 9.13854 40.6156 8.63084C40.6156 8.377 40.531 8.20777 40.3618 7.95392Z" fill="white"></path>
+                                </mask>
+                                <g mask="url(#mask0_2442_76863)"></g>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M29.369 24.5754C27.7862 23.9108 27.4931 23.3015 27.4931 22.6923C27.4931 22.0277 27.9621 21.4185 28.4897 20.9754C29.4276 20.1446 29.9552 18.9815 29.9552 17.6523C29.9552 15.16 28.3724 13 25.5 13C22.6276 13 21.0448 15.16 21.0448 17.6523C21.0448 18.9815 21.5724 20.1446 22.5103 20.9754C23.0379 21.4738 23.5069 22.0831 23.5069 22.6923C23.5069 23.3569 23.2724 23.9108 21.631 24.5754C19.2862 25.5169 17.0586 26.5692 17 28.5631C17 29.8923 18.0552 31 19.4034 31H31.5966C32.9448 31 34 29.8923 34 28.5631C33.9414 26.6246 31.7138 25.5723 29.369 24.5754Z" fill="white"></path>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M437.369 24.5754C435.786 23.9108 435.493 23.3015 435.493 22.6923C435.493 22.0277 435.962 21.4185 436.49 20.9754C437.428 20.1446 437.955 18.9815 437.955 17.6523C437.955 15.16 436.372 13 433.5 13C430.628 13 429.045 15.16 429.045 17.6523C429.045 18.9815 429.572 20.1446 430.51 20.9754C431.038 21.4738 431.507 22.0831 431.507 22.6923C431.507 23.3569 431.272 23.9108 429.631 24.5754C427.286 25.5169 425.059 26.5692 425 28.5631C425 29.8923 426.055 31 427.403 31H439.597C440.945 31 442 29.8923 442 28.5631C441.941 26.6246 439.714 25.5723 437.369 24.5754Z" fill="white"></path>
+                            </svg>
+                            <div class="actions-instructions">This option gives you the ability to download and import an excel file with all Membership information needed to enroll instead of the Employee Enrollment form.</div>
+                            <div class="actions-bottom">
+                                <c-sg-broker-ins-file-upload 
+                                    if:false={isMasRegion}
+                                    enrollment-spreadsheet={isEnrollmentSpreadsheet} 
+                                    is-from-new-customer-setup={isFromNewCustomerSetup} 
+                                    onuploaderror={handleUploadError}
+                                    onfilemapcreated={filemapCreated} 
+                                    label={labels.InsOSNcsEnrollmentSpreadsheet}
+                                    available-fields={filemapHeaders} 
+                                    theme={theme} 
+                                    title={labels.InsOSNcsEnrollmentSpreadsheet}
+                                    class="nds-m-horizontal_small slds-m-horizontal_small upload-census-btn" 
+                                    save-label={labels.Save}
+                                    button-variant="neutral" 
+                                    channel={formChannel} 
+                                    modal-button={isNotModalButton}>
+                                </c-sg-broker-ins-file-upload>
+                                <c-sg-broker-ins-file-upload 
+                                    if:true={isMasRegion}
+                                    is-keel-spreadsheet={isMasRegion}
+                                    enrollment-spreadsheet={isEnrollmentSpreadsheet} 
+                                    is-from-new-customer-setup={isFromNewCustomerSetup} 
+                                    onuploaderror={handleUploadError}
+                                    onfilemapcreated={filemapCreated} 
+                                    label={labels.InsOSNcsEnrollmentSpreadsheet}
+                                    available-fields={filemapHeaders} 
+                                    theme={theme} 
+                                    title={labels.InsOSNcsEnrollmentSpreadsheet}
+                                    class="nds-m-horizontal_small slds-m-horizontal_small upload-census-btn" 
+                                    save-label={labels.Save}
+                                    button-variant="neutral" 
+                                    channel={formChannel} 
+                                    modal-button={isNotModalButton}>
+                                </c-sg-broker-ins-file-upload>
+                                <button style="border: 0; padding: 0; background: none;" class="action-link" onclick={downloadMembershipEnrollmentTemplate}>
+                                    <svg class="slds-button__icon slds-m-right_xs m-r-svg" aria-hidden="true">
+                                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg?cache=9.31.2-1#download">
+                                        </use>
+                                    </svg>
+                                    <span>Download Enrollment Spreadsheet Template</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="upload-census-action-btn" style="flex: 1 1 0px; min-height: 425px">
+                            <header>Upload Census</header>
+                            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M9.05407 30.5462V9.56161C6.85407 9.56161 5.07715 11.3385 5.07715 13.4539V38.3308C5.07715 40.5308 6.85407 42.3078 9.05407 42.3078H28.7695C30.9695 42.3078 32.7464 40.5308 32.7464 38.4155H16.9233C12.6079 38.4155 9.05407 38.4155 9.05407 30.5462ZM39.2618 13.4539H32.6618C30.4618 13.4539 28.6848 11.677 28.6848 9.56161V2.96161C28.7695 2.28469 28.1772 1.69238 27.4156 1.69238H16.9233C14.7233 1.69238 12.9464 3.46931 12.9464 5.58469V30.4616C12.9464 32.6616 14.7233 34.3539 16.9233 34.3539H36.6387C38.8387 34.3539 40.6156 32.577 40.6156 30.4616V14.8078C40.6156 14.0462 40.0233 13.4539 39.2618 13.4539ZM40.3618 7.95392L34.2695 1.94623C34.1002 1.777 33.931 1.69238 33.6771 1.69238C33.1695 1.69238 32.7464 2.11546 32.7464 2.62315V6.93854C32.7464 8.377 33.931 9.56161 35.3695 9.56161H39.6848C40.1925 9.56161 40.6156 9.13854 40.6156 8.63084C40.6156 8.377 40.531 8.20777 40.3618 7.95392Z" fill="#0078B3"></path>
+                                <mask id="mask0_2442_76864" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="5" y="1" width="36" height="42">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M9.05407 30.5462V9.56161C6.85407 9.56161 5.07715 11.3385 5.07715 13.4539V38.3308C5.07715 40.5308 6.85407 42.3078 9.05407 42.3078H28.7695C30.9695 42.3078 32.7464 40.5308 32.7464 38.4155H16.9233C12.6079 38.4155 9.05407 38.4155 9.05407 30.5462ZM39.2618 13.4539H32.6618C30.4618 13.4539 28.6848 11.677 28.6848 9.56161V2.96161C28.7695 2.28469 28.1772 1.69238 27.4156 1.69238H16.9233C14.7233 1.69238 12.9464 3.46931 12.9464 5.58469V30.4616C12.9464 32.6616 14.7233 34.3539 16.9233 34.3539H36.6387C38.8387 34.3539 40.6156 32.577 40.6156 30.4616V14.8078C40.6156 14.0462 40.0233 13.4539 39.2618 13.4539ZM40.3618 7.95392L34.2695 1.94623C34.1002 1.777 33.931 1.69238 33.6771 1.69238C33.1695 1.69238 32.7464 2.11546 32.7464 2.62315V6.93854C32.7464 8.377 33.931 9.56161 35.3695 9.56161H39.6848C40.1925 9.56161 40.6156 9.13854 40.6156 8.63084C40.6156 8.377 40.531 8.20777 40.3618 7.95392Z" fill="white"></path>
+                                </mask>
+                                <g mask="url(#mask0_2442_76864)"></g>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M29.369 24.5754C27.7862 23.9108 27.4931 23.3015 27.4931 22.6923C27.4931 22.0277 27.9621 21.4185 28.4897 20.9754C29.4276 20.1446 29.9552 18.9815 29.9552 17.6523C29.9552 15.16 28.3724 13 25.5 13C22.6276 13 21.0448 15.16 21.0448 17.6523C21.0448 18.9815 21.5724 20.1446 22.5103 20.9754C23.0379 21.4738 23.5069 22.0831 23.5069 22.6923C23.5069 23.3569 23.2724 23.9108 21.631 24.5754C19.2862 25.5169 17.0586 26.5692 17 28.5631C17 29.8923 18.0552 31 19.4034 31H31.5966C32.9448 31 34 29.8923 34 28.5631C33.9414 26.6246 31.7138 25.5723 29.369 24.5754Z" fill="white"></path>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M437.369 24.5754C435.786 23.9108 435.493 23.3015 435.493 22.6923C435.493 22.0277 435.962 21.4185 436.49 20.9754C437.428 20.1446 437.955 18.9815 437.955 17.6523C437.955 15.16 436.372 13 433.5 13C430.628 13 429.045 15.16 429.045 17.6523C429.045 18.9815 429.572 20.1446 430.51 20.9754C431.038 21.4738 431.507 22.0831 431.507 22.6923C431.507 23.3569 431.272 23.9108 429.631 24.5754C427.286 25.5169 425.059 26.5692 425 28.5631C425 29.8923 426.055 31 427.403 31H439.597C440.945 31 442 29.8923 442 28.5631C441.941 26.6246 439.714 25.5723 437.369 24.5754Z" fill="white"></path>
+                            </svg>
+                            <div class="actions-instructions">
+                                <p class="slds-p-bottom_x-small">Import a census by clicking "Upload new Census".</p>
+                                <p class="slds-p-bottom_x-small"><strong>Note:</strong> If you use your own template please ensure the census is on the first tab of your spreadsheet and that the language in the header row matches the following labels exactly:</p>
+                                <p class="slds-p-bottom_x-small">First Name, Last Name, Date of Birth, Age (as of Effective Date), Zip Code, Relationship Type</p>
+                            </div>
+                            <div class="actions-bottom">
+                                <c-sg-broker-ins-file-upload 
+                                    enrollment-spreadsheet={isEnrollmentSpreadsheet} 
+                                    is-from-new-customer-setup={isFromNewCustomerSetup} 
+                                    onuploaderror={handleUploadError}
+                                    onfilemapcreated={filemapCreated} 
+                                    label={labels.InsOSNcsUploadCensus}
+                                    available-fields={filemapHeaders} 
+                                    theme={theme} 
+                                    title={labels.InsOSNcsUploadCensus}
+                                    class="nds-m-horizontal_small slds-m-horizontal_small upload-census-btn" 
+                                    save-label={labels.Save}
+                                    button-variant="neutral" 
+                                    modal-button={isNotModalButton}>
+                                </c-sg-broker-ins-file-upload>
+                                <button style="border: 0; padding: 0; background: none;" class="action-link" onclick={downloadUploadCensusTemplate}>
+                                    <svg class="slds-button__icon slds-m-right_xs m-r-svg" aria-hidden="true">
+                                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg?cache=9.31.2-1#download">
+                                        </use>
+                                    </svg>
+                                    <span>Download Census Template</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="manually-add-btn" style="flex: 1 1 0px; min-height: 425px">
+                            <header>Manually Add Employees</header>
+                            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M13.4538 24.5388C12.2692 22.7618 11.6769 20.7311 11.6769 18.4465C11.6769 14.5541 13.2846 11.3388 15.8231 9.39261C14.9769 7.86953 13.2846 6.76953 11.0846 6.76953C7.36154 6.76953 5.24615 9.81569 5.24615 13.2849C5.24615 15.1465 5.83846 16.7541 7.10769 17.8541C7.78462 18.5311 8.37692 19.3772 8.37692 20.2234C8.37692 21.0695 8.03846 21.9157 5.92308 22.8465C2.87692 24.2003 0.0846154 26.0618 0 28.8541C0.0846154 30.7157 1.26923 32.1541 3.04615 32.1541H5.83846C6.26154 32.1541 6.68462 31.9003 6.93846 31.4772C8.29231 29.0234 10.8308 27.5003 12.9462 26.4003C13.7077 26.0618 13.8769 25.1311 13.4538 24.5388ZM38.1615 22.8465C36.0462 21.9157 35.7077 21.1541 35.7077 20.2234C35.7077 19.2926 36.3 18.4465 36.9769 17.8541C38.2462 16.6695 38.8385 15.1465 38.8385 13.2849C38.8385 9.81569 36.8077 6.76953 33 6.76953C30.8 6.76953 29.1077 7.86953 28.1769 9.39261C30.7154 11.3388 32.3231 14.5541 32.3231 18.4465C32.3231 20.7311 31.7308 22.7618 30.5462 24.5388C30.1231 25.2157 30.3769 26.0618 31.0538 26.4003C33.1692 27.4157 35.7077 29.0234 37.0615 31.4772C37.3154 31.9003 37.7385 32.1541 38.1615 32.1541H40.9538C42.7308 32.1541 43.9154 30.7157 43.9154 28.8541C44 26.0618 41.2077 24.2003 38.1615 22.8465ZM27.6692 29.0234C25.3846 28.008 24.9615 27.0772 24.9615 26.1465C24.9615 25.1311 25.6385 24.2003 26.4 23.5234C27.7538 22.2541 28.5154 20.4772 28.5154 18.4465C28.5154 14.6388 26.2308 11.3388 22.0846 11.3388C17.9385 11.3388 15.6538 14.6388 15.6538 18.4465C15.6538 20.4772 16.4154 22.2541 17.7692 23.5234C18.5308 24.2849 19.2077 25.2157 19.2077 26.1465C19.2077 27.1618 18.8692 28.008 16.5 29.0234C13.1154 30.4618 9.9 32.0695 9.81538 35.1157C9.81538 37.1465 11.3385 38.8388 13.2846 38.8388H30.8846C32.8308 38.8388 34.3538 37.1465 34.3538 35.1157C34.2692 32.1541 31.0538 30.5465 27.6692 29.0234Z" fill="#0078B3"></path>
+                                <mask id="mask0_2442_76866" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="6" width="44" height="33">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M13.4538 24.5388C12.2692 22.7618 11.6769 20.7311 11.6769 18.4465C11.6769 14.5541 13.2846 11.3388 15.8231 9.39261C14.9769 7.86953 13.2846 6.76953 11.0846 6.76953C7.36154 6.76953 5.24615 9.81569 5.24615 13.2849C5.24615 15.1465 5.83846 16.7541 7.10769 17.8541C7.78462 18.5311 8.37692 19.3772 8.37692 20.2234C8.37692 21.0695 8.03846 21.9157 5.92308 22.8465C2.87692 24.2003 0.0846154 26.0618 0 28.8541C0.0846154 30.7157 1.26923 32.1541 3.04615 32.1541H5.83846C6.26154 32.1541 6.68462 31.9003 6.93846 31.4772C8.29231 29.0234 10.8308 27.5003 12.9462 26.4003C13.7077 26.0618 13.8769 25.1311 13.4538 24.5388ZM38.1615 22.8465C36.0462 21.9157 35.7077 21.1541 35.7077 20.2234C35.7077 19.2926 36.3 18.4465 36.9769 17.8541C38.2462 16.6695 38.8385 15.1465 38.8385 13.2849C38.8385 9.81569 36.8077 6.76953 33 6.76953C30.8 6.76953 29.1077 7.86953 28.1769 9.39261C30.7154 11.3388 32.3231 14.5541 32.3231 18.4465C32.3231 20.7311 31.7308 22.7618 30.5462 24.5388C30.1231 25.2157 30.3769 26.0618 31.0538 26.4003C33.1692 27.4157 35.7077 29.0234 37.0615 31.4772C37.3154 31.9003 37.7385 32.1541 38.1615 32.1541H40.9538C42.7308 32.1541 43.9154 30.7157 43.9154 28.8541C44 26.0618 41.2077 24.2003 38.1615 22.8465ZM27.6692 29.0234C25.3846 28.008 24.9615 27.0772 24.9615 26.1465C24.9615 25.1311 25.6385 24.2003 26.4 23.5234C27.7538 22.2541 28.5154 20.4772 28.5154 18.4465C28.5154 14.6388 26.2308 11.3388 22.0846 11.3388C17.9385 11.3388 15.6538 14.6388 15.6538 18.4465C15.6538 20.4772 16.4154 22.2541 17.7692 23.5234C18.5308 24.2849 19.2077 25.2157 19.2077 26.1465C19.2077 27.1618 18.8692 28.008 16.5 29.0234C13.1154 30.4618 9.9 32.0695 9.81538 35.1157C9.81538 37.1465 11.3385 38.8388 13.2846 38.8388H30.8846C32.8308 38.8388 34.3538 37.1465 34.3538 35.1157C34.2692 32.1541 31.0538 30.5465 27.6692 29.0234Z" fill="white"></path>
+                                </mask>
+                                <g mask="url(#mask0_2442_76866)"></g>
+                            </svg>
+                            <div class="actions-instructions">This option provides you the ability to manually enter general Membership information. Selecting this option requires the completion of the Employee Enrollment Application located at the Required Documents page.</div>
+                            <div class="actions-bottom">
+                                <vlocity_ins-button theme={theme} label={labels.InsOSCensusAddEmployee} variant="neutral"
+                                    onclick={addEmployee} class="btn add-employees" aria-live="polite" aria-label="Click to add employee">
+                                </vlocity_ins-button>
+                            </div>
+                        </div>
+                    </section>
+                </template>
+                <template if:true={ncsCensusStarted}>
+                    <!-- Upload and Add Employee Actions -->
+                    <div class="nds-m-top_medium nds-grid nds-grid_align-end nds-grid_vertical-align-center slds-m-top_medium slds-grid slds-grid_align-end slds-grid_vertical-align-center" style="margin-bottom: 4.4rem;">
+                        <div class="nds-size_1-of-12 slds-size_1-of-12"></div>
+                        <div class="nds-grid nds-grid_align-center nds-size_10-of-12 nds-m-vertical_xx-small slds-grid slds-grid_align-center slds-size_10-of-12 slds-m-vertical_xx-small">
+                            <vlocity_ins-button if:false={isMasRegion} theme={theme} label={labels.InsOSNcsEnrollmentSpreadsheet} variant="neutral"
+                                onclick={showUploadCensusModal} class="nds-m-horizontal_small slds-m-horizontal_small upload-census-modal-btn" icon-name="utility:upload">
+                            </vlocity_ins-button>
+                            <vlocity_ins-button if:true={isMasRegion} theme={theme} label={labels.InsOSNcsEnrollmentSpreadsheet} variant="neutral"
+                                onclick={showUploadKeelCensusModal} class="nds-m-horizontal_small slds-m-horizontal_small upload-census-modal-btn" icon-name="utility:upload">
+                            </vlocity_ins-button>
+                            <vlocity_ins-button theme={theme} label={labels.InsOSNcsUploadCensus} variant="neutral"
+                                onclick={showUploadCensusModal} class="nds-m-horizontal_small slds-m-horizontal_small upload-census-modal-btn" icon-name="utility:upload">
+                            </vlocity_ins-button>
+                            <vlocity_ins-button theme={theme} label={labels.InsOSCensusAddEmployee} variant="neutral"
+                                onclick={addEmployee} class="nds-m-horizontal_small slds-m-horizontal_small add-employees" aria-live="polite" aria-label="Click to add employee">
+                            </vlocity_ins-button>
+                        </div>
+                    </div>
+                    <!-- OOA Error Message - Top -->
+                    <div if:true={showOOAErrorMessage} class="ooa-error-message">
+                        More than 49% of subscribers are outside of our service area. Please verify ZIP Codes and if correct, contact Kaiser Permanente for help.
+                    </div>
+                    <!-- Census Display -->
+                    <div class="nds-grid nds-wrap nds-m-top_large slds-grid slds-wrap slds-m-top_large">
+                        <template if:true={showCensus}>
+                            <div class="nds-size_12-of-12 slds-size_12-of-12">
+                                <div class="employee-actions">
+                                    <div class="group-left">
+                                        <vlocity_ins-button if:true={showSave} label={labels.ExpandAll} onclick={employeeAccordianHandler} data-accordian="expand"></vlocity_ins-button>
+                                        <span if:true={showSave} class="nds-m-horizontal_small slds-m-horizontal_small">|</span>
+                                        <vlocity_ins-button if:true={showSave} label={labels.CollapseAll} onclick={employeeAccordianHandler} style="margin-left: 0;" class="nds-m-horizontal_small slds-m-horizontal_small" data-accordian="collapse"></vlocity_ins-button>
+                                    </div>
+                                    <div class="group-right">
+                                        <vlocity_ins-button if:true={showSave} label={labels.DownloadCensusDetails} onclick={handleDocumentDownload}></vlocity_ins-button>
+                                        <span if:true={showSave} class="nds-m-horizontal_small slds-m-horizontal_small">|</span>
+                                        <vlocity_ins-button if:true={showSave} label={labels.InsOSCensusDeleteAllData} onclick={showDeleteAllModal}></vlocity_ins-button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="nds-size_1-of-1 slds-size_1-of-1" aria-live="polite">
+                                <template for:each={pageData} for:item="employee">
+                                    <c-sg-broker-add-subscribers-row onupdate={handleUpdate} onnew={handleNewDependent}
+                                        key={employee.uuid} ondelete={handleDelete} theme={theme} onselected={handleEmployeeSelect}
+                                        display-settings={displaySettings} member={employee} headers={headers} islast={employee.isLast} effective-date={effectiveDate} from-ncs={isFromNewCustomerSetup} err-msg-dep={globalDepError}>
+                                    </c-sg-broker-add-subscribers-row>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:false={showCensus}>
+                            <div class="nds-size_1-of-1 slds-size_1-of-1">
+                                <p style="text-align: center"><b>There are currently no members in your census.</b></p>
+                            </div>
+                        </template>
+                    </div>
+                    <!-- Pagination -->
+                    <template if:true={showPagination}>
+                        <ul class="nds-button-group-list nds-text-heading_small nds-m-top_small nds-align_absolute-center 
+                            slds-button-group-list slds-text-heading_small slds-m-top_small slds-align_absolute-center">
+                            <template if:true={showPrevPageControl}>
+                                <li>
+                                    <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToFirstPage} label="&laquo;">
+                                    </vlocity_ins-button>
+                                </li>
+                                <li>
+                                    <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToPrevPage} label="&lsaquo;">
+                                    </vlocity_ins-button>
+                                </li>
+                            </template>
+                            <template for:each={pageNumbers} for:item="page">
+                                <li key={page.index}>
+                                    <button class={page.className} data-index={page.index} onclick={navigateToPage}>
+                                        <span>{ page.index }</span>
+                                    </button>
+                                </li>
+                            </template>
+                            <template if:true={showNextPageControl}>
+                                <li>
+                                    <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToNextPage} label="&rsaquo;">
+                                    </vlocity_ins-button>
+                                </li>
+                                <li>
+                                    <vlocity_ins-button theme={theme} variant="neutral" onclick={navigateToLastPage} label="&raquo;">
+                                    </vlocity_ins-button>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <!-- Delete All Confirmation Modal -->
+                    <vlocity_ins-modal class="vloc-ins-delete-all-modal" title={labels.InsOSCensusDeleteAllData} size="small"
+                        extra-header-class="nds-theme_error nds-theme_alert-texture slds-theme_error slds-theme_alert-texture">
+                        <div slot="content">
+                            <div class="nds-text-heading_small slds-text-heading_small nds-p-around_large slds-p-around_large">
+                                <p style="font-size: 1rem;">{labels.InsCensusConfirmDeleteAll}</p>
+                            </div>
+                        </div>
+                        <div slot="footer">
+                            <vlocity_ins-button variant="neutral" class="nds-p-right_medium slds-p-right_medium"
+                                onclick={closeDeleteAllModal} label={labels.InsButtonCancel}></vlocity_ins-button>
+                            <vlocity_ins-button variant="neutral" label="Yes" onclick={clearAll} aria-label="Click to confirm delete all employees" aria-live="polite"></vlocity_ins-button>
+                        </div>
+                    </vlocity_ins-modal>
+                    <!-- Upload New Census Modal - QQ and NCS -->
+                    <vlocity_ins-modal class="upload-census-modal" title="Upload new census?" size="small"
+                        extra-header-class="nds-theme_error nds-theme_alert-texture slds-theme_error slds-theme_alert-texture">
+                        <div slot="content">
+                            <div class="nds-text-heading_small slds-text-heading_small nds-p-around_large slds-p-around_large">
+                                <p style="font-size: 1rem;">Uploading a new census will remove and replace the current census details on this page. Are you sure you want to upload a new census?</p>
+                            </div>
+                        </div>
+                        <div slot="footer">
+                            <div class="upload-census-modal-buttons">
+                                <vlocity_ins-button variant="neutral" class="nds-p-right_medium slds-p-right_medium"
+                                    onclick={closeUploadCensusModal} label="Cancel"></vlocity_ins-button>
+                                <c-sg-broker-ins-file-upload 
+                                    enrollment-spreadsheet={isEnrollmentSpreadsheet} 
+                                    is-from-new-customer-setup={isFromNewCustomerSetup} 
+                                    onclick={closeUploadCensusModal} 
+                                    onuploaderror={handleUploadError}
+                                    onfilemapcreated={filemapCreated} 
+                                    label="Yes" 
+                                    available-fields={filemapHeaders} 
+                                    theme={theme} 
+                                    title={labels.InsOSNcsUploadCensus} 
+                                    save-label={labels.Save} 
+                                    button-variant="neutral" 
+                                    channel={formChannel} 
+                                    modal-button={isModalButton}
+                                    aria-label="Click to confirm uploading a new census"
+                                    aria-live="polite">
+                                </c-sg-broker-ins-file-upload>
+                            </div>
+                        </div>
+                    </vlocity_ins-modal>
+                    <vlocity_ins-modal class="upload-keel-census-modal" title="Upload new census?" size="small"
+                        extra-header-class="nds-theme_error nds-theme_alert-texture slds-theme_error slds-theme_alert-texture">
+                        <div slot="content">
+                            <div class="nds-text-heading_small slds-text-heading_small nds-p-around_large slds-p-around_large">
+                                <p style="font-size: 1rem;">Uploading a new census will remove and replace the current census details on this page. Are you sure you want to upload a new census?</p>
+                            </div>
+                        </div>
+                        <div slot="footer">
+                            <div class="upload-census-modal-buttons">
+                                <vlocity_ins-button variant="neutral" class="nds-p-right_medium slds-p-right_medium"
+                                    onclick={closeUploadKeelCensusModal} label="Cancel"></vlocity_ins-button>
+                                <c-sg-broker-ins-file-upload 
+                                    is-keel-spreadsheet={isMasRegion}
+                                    enrollment-spreadsheet={isEnrollmentSpreadsheet} 
+                                    is-from-new-customer-setup={isFromNewCustomerSetup} 
+                                    onclick={closeUploadKeelCensusModal} 
+                                    onuploaderror={handleUploadError}
+                                    onfilemapcreated={filemapCreated} 
+                                    label="Yes" 
+                                    available-fields={filemapHeaders} 
+                                    theme={theme} 
+                                    title={labels.InsOSNcsUploadCensus} 
+                                    save-label={labels.Save} 
+                                    button-variant="neutral" 
+                                    channel={formChannel} 
+                                    modal-button={isModalButton}
+                                    aria-label="Click to confirm uploading a new census"
+                                    aria-live="polite">
+                                </c-sg-broker-ins-file-upload>
+                            </div>
+                        </div>
+                    </vlocity_ins-modal>
+                    <!-- OOA Error Message - Bottom -->
+                    <div if:true={showOOAErrorMessage} class="ooa-error-message">
+                        More than 49% of subscribers are outside of our service area. Please verify ZIP Codes and if correct, contact Kaiser Permanente for help.
+                    </div>
+                    <!-- Add and Save Employee, bottom -->
+                    <footer if:true={showSave}>
+                        <vlocity_ins-button if:true={showSave} label={labels.InsValidateCensus} onclick={saveMembers} class="save-btn" aria-label="Click to Save Subscribers" aria-live="polite"></vlocity_ins-button>
+                        <vlocity_ins-button theme={theme} label={labels.InsOSCensusAddEmployee} variant="neutral"
+                            onclick={addEmployee} style="margin-right: 0; margin-left: 0;" class="nds-m-horizontal_small slds-m-horizontal_small add-employees" aria-live="polite" aria-label="Click to add employee">
+                        </vlocity_ins-button>
+                    </footer>
+                </template>
+            </template>
+            <!-- Upload Census - Error Module -->
+            <vlocity_ins-modal class="upload-census-error-modal" title="Error" size="small" extra-header-class="error-module-bg nds-theme_alert-texture slds-theme_alert-texture">
+                <div slot="content">
+                    <p style="font-size: 1rem; padding: 1rem 1rem 0;">File import has failed. The following error should be corrected in order to proceed:</p>
+                    <p style="font-size: 1rem; padding: 1rem;">{uploadErrorMessage}</p>
+                </div>
+                <div slot="footer">
+                    <vlocity_ins-button variant="neutral" class="nds-p-right_medium slds-p-right_medium" onclick={closeUploadCensusErrorModal} label="Close"></vlocity_ins-button>
+                </div>
+            </vlocity_ins-modal>
+        </template>
+    </template>
+</template>
