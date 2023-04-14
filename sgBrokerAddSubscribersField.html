@@ -1,0 +1,161 @@
+<template>
+    <template if:true={isReadonly}>
+        <vlocity_ins-input read-only required={field.isRequired} label={field.label} value={value} type="text"
+            theme={theme}>
+        </vlocity_ins-input>
+    </template>
+    <template if:false={isReadonly}>
+        <template if:true={isText}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="text" theme={theme} onchange={handleValueChange} placeholder={field.placeholder}>
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isTextNum}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="text" theme={theme} onchange={handleValueChange} placeholder={field.placeholder} pattern="[0-9]+">
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isTextarea}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="textarea" theme={theme} onchange={handleValueChange} placeholder={field.placeholder}>
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isCheckbox}>
+            <div if:true={hideElement} class="physical-assertion-container">
+                <div>DOES THE EMPLOYEE WORK IN THE SERVICE AREA?</div>
+                <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label="Yes"
+                    checked={value} type="checkbox" theme={theme} onchange={handleValueChange}
+                    placeholder={field.placeholder}>
+                </vlocity_ins-input>
+            </div>
+        </template>
+        <!-- deepti-->
+        <!-- deepti-->
+        <template if:true={isNumber}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="number" theme={theme} onchange={handleValueChange} placeholder={field.placeholder}>
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isPercent}>
+            <div class="slds-grid slds-grid_vertical-align-end nds-grid nds-grid_vertical-align-end">
+                <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label}
+                    value={value} type="number" theme={theme} onchange={handleValueChange}
+                    placeholder={field.placeholder}></vlocity_ins-input>
+                <span class="slds-p-bottom_x-small nds-p-bottom_x-small">%</span>
+            </div>
+        </template>
+        <template if:true={isCurrency}>
+            <vlocity_ins-masked-input type="currency" currency={currency.code} theme={theme} required={field.isRequired}
+                disabled={field.isDisabled} label={field.label} value={value} onblur={handleValueChange}
+                placeholder={field.placeholder}></vlocity_ins-masked-input>
+        </template>
+        <template if:true={isDatetime}>
+            <vlocity_ins-input required={field.isRequired} field-level-help={field.tooltipMessage}
+                disabled={field.isDisabled} label={field.label} value={value} type="datetime"
+                date-format={dateTimeDateFormat} output-format={dateTimeOutputFormat} date-placeholder=""
+                time-placeholder="" date-label="" time-label="" theme={theme} onchange={handleValueChange}>
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isDate}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="date" format={dateFormat} output-format={dateOutputFormat} theme={theme}
+                onchange={handleValueChange} placeholder={field.placeholder}></vlocity_ins-input>
+        </template>
+        <template if:true={isTime}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="time" theme={theme} onchange={handleValueChange} placeholder={field.placeholder}>
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isEmail}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="email" theme={theme} onchange={handleValueChange} placeholder={field.placeholder}>
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isPhone}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="tel" theme={theme} onchange={handleValueChange} placeholder={field.placeholder}>
+            </vlocity_ins-input>
+        </template>
+        <template if:true={isUrl}>
+            <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                type="url" theme={theme} onchange={handleValueChange} placeholder={field.placeholder}>
+            </vlocity_ins-input>
+        </template>
+        <!-- Dropdown -->
+        <template if:true={isDropdown}>
+            <template if:false={isToogle}>
+                <!-- added isRelationshipField condition for OOB Relationship and display custom Relationship__c-->
+                <template if:false={isRelationshipField}>
+                    <vlocity_ins-combobox required={field.isRequired} disabled={field.isDisabled} label={field.label}
+                        options={options} value={value} theme={theme} onchange={handleValueChange} message-when-value-missing ="This field value is missing">
+                    </vlocity_ins-combobox>
+                </template>
+            </template>
+            <template if:true={isToogle}>
+                <template if:true={isCobra}>
+                    <vlocity_ins-input type="toggle" label={field.label} name={field.fieldName} value={value} 
+                        message-toggle-active="Selected" message-toggle-inactive="Unselected" 
+                        checked={cobraChecked} onchange={handleCobraChange}>
+                    </vlocity_ins-input>
+                </template>
+                <template if:true={isMedicare}>
+                    <vlocity_ins-input type="toggle" label={field.label} name={field.fieldName} value={value}
+                        message-toggle-active="Selected" message-toggle-inactive="Unselected" checked={medicareChecked}
+                        onchange={handleMedicareChange}>
+                    </vlocity_ins-input>
+                </template>
+                <template if:true={isServiceArea}>
+                    <vlocity_ins-input type="toggle" label={field.label} name={field.fieldName} value={value}
+                        message-toggle-active="Selected" message-toggle-inactive="Unselected"
+                        checked={serviceAreaChecked} onchange={handleServiceAreaChange}>
+                    </vlocity_ins-input>
+                </template>
+            </template>
+        </template>
+        <template if:true={isRelationshipDropdown}>
+            <vlocity_ins-combobox required={field.isRequired} read-only={isReadOnly} label={field.label}
+                options={options} value={value} theme={theme} onchange={handleValueChange} message-when-value-missing ="This field value is missing">
+            </vlocity_ins-combobox>
+        </template>
+        <template if:true={isMultiPicklist}>
+            <lightning-dual-listbox label={field.label} source-label={labels.InsProductAvailable}
+                selected-label={labels.Selected} required={field.isRequired} value={value} disabled={field.isDisabled}
+                options={options} onchange={handleValueChange}>
+            </lightning-dual-listbox>
+        </template>
+        <lightning-record-edit-form if:true={isLookUp} object-api-name={field.objectApiName}>
+            <lightning-messages></lightning-messages>
+           <template if:false={isBirthDate}>
+                <label for="lookupfield" class={labelStyles}>{field.label}</label>
+                <lightning-input-field id="lookupfield" required={field.isRequired} variant="label-hidden"
+                    field-name={field.fieldName} value={value} onchange={handleValueChange} disabled={disabled}>
+                </lightning-input-field>
+            </template>
+            <template if:true={isBirthDate}>
+                <template if:true={fromNcs}>
+                    <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                        type="date" format={dateFormat} output-format={dateOutputFormat} theme={theme} aria-label="Date of Birth field in MM/DD/YYYY format" 
+                        onchange={handleValueChange} placeholder={field.placeholder}>
+                    </vlocity_ins-input>
+                </template>
+                <template if:false={fromNcs}>
+                    <div class="age-field-qq">
+                        <vlocity_ins-input required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                            type="date" format={dateFormat} output-format={dateOutputFormat} theme={theme} aria-label="Date of Birth field in MM/DD/YYYY format" 
+                            onchange={handleValueChange} placeholder={field.placeholder} style="width: 100%;" onkeydown={testDisableEnter}>
+                        </vlocity_ins-input>
+                        <!-- <input required={field.isRequired} disabled={field.isDisabled} value={value}
+                            type="date" format={dateFormat} onchange={handleValueChange} placeholder={field.placeholder} style="width: 100%;"/> -->
+                        <span if:true={showOrElement} style="margin: 0 0 0.4rem 0.75rem;">or</span>
+                    </div>
+                    <!-- <vlocity_ins-input if:true={isDependentMember} required={field.isRequired} disabled={field.isDisabled} label={field.label} value={value}
+                        type="date" format={dateFormat} output-format={dateOutputFormat} theme={theme}
+                        onchange={handleValueChange} placeholder={field.placeholder}>
+                    </vlocity_ins-input> -->
+                </template>
+                <div class="field-subtext">mm/dd/yyyy</div>
+            </template>
+        </lightning-record-edit-form>
+    </template>
+    <div if:true={iszipcode} class="field-subtext">Enter 5-digit zip code</div>
+</template>

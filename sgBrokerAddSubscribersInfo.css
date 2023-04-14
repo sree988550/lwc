@@ -1,0 +1,27 @@
+.vloc-ins-error-message {
+    border-radius: 0.25rem;
+    justify-content: left;
+}
+
+.vloc-ins-readonly-toggle {
+    pointer-events: none;
+}
+
+.delete-dependent {
+    border: none;
+    background: none;
+    color: #0078B3;
+    margin: auto;
+}
+
+.custom-padding {
+    padding: 0.75rem 0.375rem;
+}
+
+.dependent-details-header {
+    font-family: 'Gotham-Medium', sans-serif !important;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: #0D1C3D;
+    padding: 0.75rem 0.375rem;
+}

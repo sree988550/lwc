@@ -1,0 +1,84 @@
+<template>
+    <template if:true={isDependent}>
+        <div class="dependent-details-header">Dependent {index}</div>
+    </template>
+    <vlocity_ins-layout multiple-rows>
+        <vlocity_ins-layout-item size="12">
+            <div class="nds-grid nds-wrap slds-grid slds-wrap">
+                <template for:each={headerColumns} for:item="header">
+                    <c-sg-broker-add-subscribers-field
+                        theme={theme}
+                        field={header}
+                        key={header.fieldName}
+                        channel={formChannel}
+                        class="nds-size_1-of-4 slds-size_1-of-4 custom-padding"
+                        iszipcode={header.isZipCode}
+                        from-ncs={fromNcs}
+                        effective-date={effectiveDate}
+                    ></c-sg-broker-add-subscribers-field>
+                </template>
+                <button onclick={deleteMember} class="delete-dependent nds-p-around_xx-small slds-p-around_xx-small nds-size_1-of-6 slds-size_1-of-6" title={labels.Delete} if:true={isDependent}>Delete dependent {index}</button>
+            </div>
+        </vlocity_ins-layout-item>
+
+        <!-- <vlocity_ins-layout-item
+            size="1"
+            class="nds-p-horizontal_small nds-size_1-of-6 slds-p-horizontal_small slds-size_1-of-6"
+        >
+            <vlocity_ins-button
+                if:true={isDependent}
+                theme={theme}
+                variant="icon"
+                icon-name="utility:delete"
+                icon-size="x-small"
+                icon-fill="#0078b3"
+                onclick={deleteMember}
+                title={labels.Delete}
+                class="nds-float_right nds-p-around_xx-small slds-float_right slds-p-around_xx-small"
+            >
+            </vlocity_ins-button>
+        </vlocity_ins-layout-item> -->
+
+        <template if:true={hasOptOut}>
+            <div
+                class="nds-size_1-of-1 nds-grid nds-wrap nds-p-around_small slds-size_1-of-1 slds-grid slds-wrap slds-p-around_small"
+            >
+                <template for:each={optOutTypes} for:item="optOutType">
+                    <div key={optOutType.value} class="nds-size_1-of-5 slds-size_1-of-5">
+                        <label
+                            class="nds-form-element__label slds-form-element__label nds-p-around_small slds-p-around_small"
+                            aria-label={optOutType.label}
+                            >{optOutType.label}</label
+                        >
+                        <vlocity_ins-toggle
+                            type="toggle"
+                            toggle-enabled-label=""
+                            toggle-disabled-label=""
+                            value={optOutType.value}
+                            checked={optOutType.checked}
+                            name="optOutTypes"
+                            onchange={handleMultiValueUpdate}
+                            data-field-name={optOutTypesField.name}
+                            data-field-value={optOutType.value}
+                            class="nds-m-bottom_large nds-size_1-of-5 nds-p-around_small slds-m-bottom_large slds-size_1-of-5 slds-p-around_small vloc-ins-readonly-toggle"
+                        ></vlocity_ins-toggle>
+                    </div>
+                </template>
+            </div>
+        </template>
+       
+        <template if:true={isDependent}>
+            <vlocity_ins-layout-item size="12" class="nds-size_1-of-1 slds-size_1-of-1">
+                <div
+                    if:true={member.error}
+                    role="alert"
+                    style="color: #FD0F0F; background: #fff;"
+                    class="nds-notify nds-notify_alert nds-theme_alert-texture nds-theme_error nds-m-bottom_large slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-bottom_large vloc-ins-error-message"
+                >
+                    <span class="nds-assistive-text slds-assistive-text">{errMsgDep}</span>
+                    <span>{errMsgDep}</span>
+                </div>
+            </vlocity_ins-layout-item>
+        </template>
+    </vlocity_ins-layout>
+</template>

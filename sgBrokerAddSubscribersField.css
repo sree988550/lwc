@@ -1,0 +1,14 @@
+.tr-width {
+    width: 140%;
+}
+
+.field-subtext {
+    color: #677083;
+    margin-top: 0.25rem;
+}
+
+.age-field-qq {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}

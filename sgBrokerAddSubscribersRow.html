@@ -1,0 +1,95 @@
+<template>
+    <div class="nds-col nds-size_1-of-1 nds-box slds-col slds-size_1-of-1 slds-box vloc-ins-members-wrapper" data-last-row={islast}>
+        <!-- Employee Card - Header -->
+        <div class={getCss}>
+            <vlocity_ins-layout theme={theme}>
+                <vlocity_ins-layout-item size="1" class="nds-grid nds-grid_vertical-align-center slds-grid slds-grid_vertical-align-center employee-header-chevron" >
+                    <vlocity_ins-button if:false={member.isSelected} theme={theme} variant="icon" icon-name="utility:chevronright" icon-size="x-small" icon-fill="#006BA6" aria-label="Click to expand" aria-live="polite" onclick={expand}></vlocity_ins-button>
+                    <vlocity_ins-button if:true={member.isSelected} theme={theme} variant="icon" icon-name="utility:chevrondown" icon-size="x-small" icon-fill="#006BA6" aria-label="Click to close" aria-live="polite" onclick={expand}> </vlocity_ins-button>
+                </vlocity_ins-layout-item>
+                <vlocity_ins-layout-item size="3" class="vloc-ins-employee-name-block">
+                    <div class="uppercase label-color">{labels.InsOSCensusRelationshipEmployee} {memberIndex}</div>
+                    <div class="vloc-ins-text-bold slds-m-top_xx-small text-color add-sub-row-member-name" >
+                        {memberName}
+                    </div>
+                </vlocity_ins-layout-item>
+                <vlocity_ins-layout-item size="4" class="nds-grid nds-grid_vertical-align-end slds-grid slds-grid_vertical-align-end" >
+                    <span class="vloc-ins-text-bold text-color dependents-header">
+                        {dependentCount}
+                    </span>
+                </vlocity_ins-layout-item>
+                <vlocity_ins-layout-item size="4" class="nds-grid nds-grid_vertical-align-end slds-grid slds-grid_vertical-align-end" >
+                    <div class="vloc-ins-delete-employee-button nds-grid nds-grid_vertical-align-center slds-grid slds-grid_vertical-align-center" >
+                        <!-- <template if:true={hasError}>
+                            <vlocity_ins-icon icon-name="utility:warning" size="x-small" color="#c23934" theme={theme} class="nds-p-around_xx-small slds-p-around_xx-small" > </vlocity_ins-icon>
+                            <span class="nds-text-color_error slds-text-color_error" >{labels.InsMissingInformation}</span>
+                        </template> -->
+                        <button class="delete-employee" onclick={deleteEmployee}>Delete {labels.InsOSCensusRelationshipEmployee} {memberIndex}</button>
+                    </div>
+                </vlocity_ins-layout-item>
+            </vlocity_ins-layout>
+        </div>
+        <!-- Employee Card - Content -->
+        <vlocity_ins-layout if:true={member.isSelected} multiple-rows extraclass="nds-p-horizontal_medium nds-p-vertical_x-small slds-p-horizontal_medium slds-p-vertical_x-small employee-content-container" >
+            <div class="slds-size_1-of-1">
+                <!-- <vlocity_ins-accordion theme={theme} allow-multiple-sections-open="true" active-section-name="each_section"> -->
+                    <h3 class="member-details-header" aria-label={memberIndexAria}>Details</h3>
+                    <template for:each={sections} for:item="section">
+                        <!-- <vlocity_ins-accordion-section key={section.key} name="each_section" label={section.title} theme={theme}> -->
+                            <c-sg-broker-add-subscribers-info onupdate={handleUpdate} headers={section.headers} member={member} 
+                                theme={theme} disable-relationship-field={section.disableRelationshipField} effective-date={effectiveDate} from-ncs={fromNcs} key={section.key}  err-msg-dep={errMsgDep}>
+                            </c-sg-broker-add-subscribers-info>
+                        <!-- </vlocity_ins-accordion-section> -->
+                    </template>
+                    <template if:true={hasPlans}>
+                        <vlocity_ins-accordion-section name="planSelection" label={labels.InsPlans} theme={theme}>
+                            <div class="nds-size_11-of-12 nds-grid nds-wrap slds-size_11-of-12 slds-grid slds-wrap">
+                                <template for:each={planSections} for:item="planSection">
+                                    <template for:each={planSection.values} for:item="plan">
+                                        <div class="nds-m-bottom_large nds-size_1-of-5 nds-p-around_small slds-m-bottom_large
+                                            slds-size_1-of-5 slds-p-around_small" key={plan.key} >
+                                            <label class="slds-form-element__label" aria-label={plan.label}>
+                                                {plan.label}
+                                            </label>
+                                            <div class="slds-text-heading_small">{plan.value}</div>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
+                        </vlocity_ins-accordion-section>
+                    </template>
+                <!-- </vlocity_ins-accordion> -->
+                <div class="slds-text-color_error slds-m-bottom_medium" style="margin-left: 0.5rem;" if:true={member.invalidZip}>
+                    The employee ZIP Code is invalid or not in our service area. Please ensure that the ZIP Code is correct before proceeding.
+                </div>
+                <div if:true={errMsgEmp} role="alert"
+                    style="color: #FD0F0F; background: #fff;"
+                    class="nds-notify nds-notify_alert nds-theme_alert-texture nds-theme_error nds-m-bottom_large slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-bottom_large vloc-ins-error-message">
+                    <!-- <span class="nds-assistive-text slds-assistive-text">{member.error}</span>
+                    <span>{member.error}</span> -->
+                    <span class="nds-assistive-text slds-assistive-text">{errMsgEmp}</span>
+                    <span>{errMsgEmp}</span>
+                </div>
+                <!-- <vlocity_ins-accordion theme={theme} allow-multiple-sections-open="true" active-section-name="dependents"> -->
+                    <template if:true={hasDependents}>
+                        <!-- <vlocity_ins-accordion-section theme={theme} name="dependents" label={labels.InsDependentPlural}> -->
+                            <template for:each={member.dependents} for:item="dependent" for:index="index">
+                                <div class="nds-size_1-of-1 slds-size_1-of-1" key={dependent.uuid}>
+                                    <c-sg-broker-add-subscribers-info headers={headers} member={dependent} index={index} ondelete={deleteDependent}
+                                        theme={theme} onupdate={handleUpdate} type-to-enrolled-plans={typeToEnrolledPlans} effective-date={effectiveDate} from-ncs={fromNcs} err-msg-dep={errMsgDep}>
+                                    </c-sg-broker-add-subscribers-info>
+                                </div>
+                            </template>
+                        <!-- </vlocity_ins-accordion-section> -->
+                    </template>
+                <!-- </vlocity_ins-accordion> -->
+            </div>
+            <vlocity_ins-layout-item>
+                <vlocity_ins-button theme={theme} variant="neutral" onclick={addNewDependent} label={labels.InsOSCensusAddDependent}
+                    extraclass="nds-m-horizontal_small slds-m-horizontal_small add-dependent"
+                    class="vloc-ins-text-bold" style="margin-left: 0.375rem;">
+                </vlocity_ins-button>
+            </vlocity_ins-layout-item>
+        </vlocity_ins-layout>
+    </div>
+</template>

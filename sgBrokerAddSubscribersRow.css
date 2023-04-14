@@ -1,0 +1,78 @@
+.vloc-ins-members-wrapper {
+    padding: 0;
+    border-bottom: 0;
+}
+
+.vloc-ins-employee-name-block {
+    min-height: 2.625rem;
+}
+
+.vloc-ins-employee-active {
+    /* background-color: #f0f7fd; */
+    background-color: inherit;
+}
+
+.vloc-ins-text-bold {
+    font-weight: bold;
+}
+
+.vloc-ins-add-dependent {
+    border-color: currentColor;
+    line-height: 1rem;
+}
+
+.vloc-ins-delete-census {
+    margin-left: auto;
+}
+
+.vloc-ins-delete-employee-button {
+    width: 100%;
+}
+
+.vloc-ins-error-message {
+    border-radius: 0.25rem;
+    justify-content: left;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.delete-employee {
+    border: none;
+    background-color: transparent;
+    color: #006BA6;
+    width: 100%;
+    text-align: right;
+}
+
+.label-color {
+    color: #677083;
+}
+
+.text-color {
+    color: #0D1C3D;
+}
+
+[data-last-row="true"] {
+    border-bottom-left-radius: var(--lwc-borderRadiusMedium,0.25rem);
+    border-bottom-right-radius: var(--lwc-borderRadiusMedium,0.25rem);
+    border-bottom: var(--lwc-borderWidthThin,1px) solid var(--lwc-colorBorder,rgb(201, 201, 201));
+}
+
+.dependents-header {
+    font-family: 'Gotham-Medium', sans-serif !important;
+    text-transform: capitalize;
+}
+
+.member-details-header {
+    font-family: 'Gotham-Medium', sans-serif !important;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: #0D1C3D;
+    padding: 0.75rem 0.375rem;
+}
+
+.employee-content-container {
+    padding-left: 3.5rem !important;
+}
